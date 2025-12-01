@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bright & Shafa Learning Center</title>
+  <style>
+    body { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background:#f3f4f6; margin:0; padding:0; }
+    header { background:#0ea5e9; color:white; padding:28px 16px; text-align:center; }
+    .container { max-width:880px; margin:28px auto; background:white; padding:24px; border-radius:12px; box-shadow:0 6px 20px rgba(2,6,23,0.08); }
+    label{display:block;font-weight:600;margin-top:12px;margin-bottom:6px;color:#111827}
+    input, select, textarea{width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    button{background:#0ea5e9;border:none;color:white;padding:12px 18px;border-radius:10px;font-weight:700;cursor:pointer}
+    .note{font-size:13px;color:#374151;margin-top:8px}
+    footer{text-align:center;font-size:13px;color:#6b7280;margin:20px 0}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Bright & Shafa Learning Center</h1>
+    <div>Registration Form — Walvis Bay</div>
+  </header>
+
+  <main class="container">
+    <form id="registrationForm">
+      <div class="grid">
+        <div>
+          <label>Learner Full Name *</label>
+          <input name="fullName" required />
+        </div>
+        <div>
+          <label>Date of Birth *</label>
+          <input type="date" name="dateOfBirth" required />
+        </div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <label>Gender</label>
+          <select name="gender">
+            <option value="">Select</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label>ID / Passport</label>
+          <input name="idPassport" />
+        </div>
+      </div>
+
+      <hr/>
+
+      <label>Parent/Guardian Full Name *</label>
+      <input name="parentName" required />
+
+      <div class="grid">
+        <div>
+          <label>Parent Email *</label>
+          <input name="parentEmail" type="email" required />
+        </div>
+        <div>
+          <label>Parent Phone *</label>
+          <input name="parentPhone" required />
+        </div>
+      </div>
+
+      <label>Program *</label>
+      <select name="program" required>
+        <option value="">Select program</option>
+        <option>Computer Course</option>
+        <option>Grade 1–3</option>
+        <option>Grade 4–7</option>
+        <option>Grade 8–9</option>
+        <option>Grade 10–11 Full Time</option>
+        <option>Improving/Upgrading: Namibian System</option>
+        <option>Improving/Upgrading: Cambridge IGCSE</option>
+        <option>AS Level/NAMCOL</option>
+      </select>
+
+      <label>Subjects (if applicable)</label>
+      <textarea name="subjectsList" rows="3" placeholder="One subject per line (optional)"></textarea>
+
+      <label>How did you hear about us?</label>
+      <select name="howHeard">
+        <option value="">Select</option>
+        <option>Social Media</option>
+        <option>Friend/Family</option>
+        <option>Google Search</option>
+        <option>Walk-in</option>
+        <option>Radio/TV</option>
+        <option>Other</option>
+      </select>
+
+      <label>Additional Comments</label>
+      <textarea name="additionalComments" rows="4"></textarea>
+
+      <div style="margin-top:14px">
+        <label style="display:flex;gap:10px;align-items:center">
+          <input type="checkbox" name="agreeTerms" value="yes" required />
+          <span>I agree to the terms and conditions</span>
+        </label>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:18px">
+        <button type="submit">Submit Registration</button>
+        <button type="button" id="resetBtn" style="background:#ef4444">Reset</button>
+      </div>
+
+      <p id="status" class="note"></p>
+      <p class="note">Submissions will be emailed to <strong>brightshafa241@gmail.com</strong> once you connect the Google Apps Script (see README).</p>
+    </form>
+  </main>
+
+  <footer>
+    © Bright & Shafa Learning Center — Walvis Bay
+  </footer>
+
+  <script>
+    // IMPORTANT: Replace the SCRIPT_URL below with your deployed Google Apps Script Web App URL
+    const SCRIPT_URL = "REPLACE_WITH_YOUR_APPS_SCRIPT_URL";
+
+    const form = document.getElementById('registrationForm');
+    const status = document.getElementById('status');
+    const resetBtn = document.getElementById('resetBtn');
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      status.textContent = 'Submitting...';
+
+      const fd = new FormData(form);
+
+      // By default send as POST form data that Apps Script can read via e.parameter
+      fetch(SCRIPT_URL, { method: 'POST', body: fd, mode: 'no-cors' })
+        .then(() => {
+          status.textContent = 'Registration submitted successfully. Parent will receive a confirmation email.';
+          form.reset();
+        })
+        .catch((err) => {
+          console.error(err);
+          status.textContent = 'Error submitting form. Please check the Apps Script URL and network connection.';
+        });
+    });
+
+    resetBtn.addEventListener('click', () => form.reset());
+  </script>
+</body>
+</html>
+{
+  "version": 2,
+  "builds": [
+    { "src": "index.html", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}
+function doPost(e) {
+  var data = e.parameters || e.parameter || {};
+  try {
+    if (e.postData && e.postData.type === 'application/json') {
+      data = JSON.parse(e.postData.contents);
+    }
+  } catch (err) {}
+
+  var adminEmail = 'brightshafa241@gmail.com';
+  var subject = 'New Registration - Bright Shafa Learning Center';
+  var body = 'New registration received:\n\n' +
+    'Learner: ' + (data.fullName || '') + '\n' +
+    'Parent: ' + (data.parentName || '') + '\n' +
+    'Program: ' + (data.program || '') + '\n' +
+    'Parent Email: ' + (data.parentEmail || '') + '\n' +
+    'Phone: ' + (data.parentPhone || '') + '\n' +
+    'Subjects: ' + (data.subjectsList || '') + '\n\n' +
+    'Submitted on: ' + new Date();
+
+  MailApp.sendEmail({ to: adminEmail, subject: subject, body: body });
+
+  if (data.parentEmail) {
+    var pSubject = 'Registration Confirmation - Bright Shafa Learning Center';
+    var pBody = 'Dear ' + (data.parentName || '') + ',\n\n' +
+      'Thank you for registering ' + (data.fullName || '') + ' for ' + (data.program || '') + '.\n' +
+      'We will contact you within 24-48 hours.\n\nRegards,\nBright Shafa Learning Center';
+    MailApp.sendEmail({ to: data.parentEmail, subject: pSubject, body: pBody });
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({status:'success'})).setMimeType(ContentService.MimeType.JSON);
+}
+# bright-shafa-learning-center
+
+Static site with registration form. Deploy Google Apps Script to receive emails, then deploy to Vercel.
+
+See instructions in repo root or ask me to guide you step-by-step.
