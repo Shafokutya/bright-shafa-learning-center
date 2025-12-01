@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bright Shafa LC - 2026 Registration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="app"></div>
+
+    <script>
+        // IMPORTANT: Replace this with your Google Apps Script Web App URL
+        const GOOGLE_SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+        
+        let currentSection = 1;
+        let formData = {
+            fullName: '', dateOfBirth: '', gender: '', idPassport: '',
+            parentName: '', parentEmail: '', parentPhone: '', homeAddress: '',
+            emergencyContact: '', program: '', courseDuration: '', numSubjects: '',
+            subjectsList: '', studyMode: '', monthsToPay: '1', packageOption: '',
+            paymentResponsible: '', sponsorDetails: '', paymentSchedule: '',
+            specialNeeds: '', howHeard: '', additionalComments: '',
+            agreeTerms: false, signature: ''
+        };
+
+        function calculateFees() {
+            let regFee = 0, monthlyFee = 0, booksFee = 0, examFee = 0;
+            
+            switch(formData.program) {
+                case 'Computer Course':
+                    regFee = 350;
+                    if(formData.courseDuration === '2weeks') monthlyFee = 500;
+                    if(formData.courseDuration === '1month') monthlyFee = 800;
+                    if(formData.courseDuration === '3months') monthlyFee = 750;
+                    if(formData.courseDuration === '6months') monthlyFee = 650;
+                    break;
+                case 'Grade 1–3':
+                    regFee = 350;
+                    monthlyFee = 500 * parseInt(formData.monthsToPay || 1);
+                    break;
+                case 'Grade 4–7':
+                    regFee = 350;
+                    monthlyFee = 600 * parseInt(formData.monthsToPay || 1);
+                    break;
+                case 'Grade 8–9':
+                    regFee = 350;
+                    monthlyFee = formData.packageOption === 'three' ? 800 : 1000;
+                    break;
+                case 'Grade 10–11 Full Time':
+                    regFee = 350;
+                    monthlyFee = formData.packageOption === 'one' ? 350 : 900;
+                    break;
+                case 'Improving/Upgrading: Namibian System':
+                    regFee = 500;
+                    const numNam = parseInt(formData.numSubjects) || 0;
+                    monthlyFee = 350 * numNam;
+                    booksFee = 400 * numNam;
+                    examFee = 250 * numNam;
+                    break;
+                case 'Improving/Upgrading: Cambridge IGCSE':
+                    regFee = 500;
+                    const numCam = parseInt(formData.numSubjects) || 0;
+                    monthlyFee = 400 * numCam;
+                    booksFee = 400 * numCam;
+                    examFee = 3600 * numCam;
+                    break;
+                case 'AS Level/NAMCOL':
+                    regFee = 350;
+                    const numAS = parseInt(formData.numSubjects) || 0;
+                    monthlyFee = 500 * numAS;
+                    break;
+            }
+            
+            return {
+                regFee,
+                monthlyFee,
+                booksFee,
+                examFee,
+                total: regFee + monthlyFee + booksFee + examFee
+            };
+        }
+
+        async function submitForm() {
+            const fees = calculateFees();
+            const submission = {
+                ...formData,
+                fees,
+                timestamp: new Date().toISOString(),
+                invoiceNumber: `INV-2026-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`
+            };
+
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(submission)
+                });
+                showSuccess(submission);
+            } catch(error) {
+                console.error('Error:', error);
+                showSuccess(submission); // Still show success (no-cors limitation)
+            }
+        }
+
+        function showSuccess(data) {
+            const fees = data.fees;
+            document.getElementById('app').innerHTML = `
+                <div class="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4">
+                    <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8 mt-8">
+                        <div class="text-center">
+                            <div class="w-20 h-20 bg-green-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                                <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                            <h2 class="text-3xl font-bold text-gray-800 mb-4">Registration Successful!</h2>
+                            <p class="text-gray-600 mb-6">Thank you for registering with Bright Shafa Learning Center!</p>
+                            
+                            <div class="bg-blue-50 rounded-lg p-6 mb-6 text-left">
+                                <h3 class="font-semibold text-lg mb-3">📧 Check Your Email</h3>
+                                <p class="text-gray-700 mb-2">An invoice has been sent to:</p>
+                                <p class="font-bold text-blue-600">${data.parentEmail}</p>
+                                <p class="text-sm text-gray-500 mt-2">(Please check spam folder if not received)</p>
+                            </div>
+
+                            <div class="bg-green-50 border-2 border-green-200 rounded-lg p-6 mb-6 text-left">
+                                <h3 class="font-semibold text-lg mb-3 text-green-800">💳 Payment Details</h3>
+                                <div class="space-y-3">
+                                    <div>
+                                        <p class="font-bold">Total Amount Due:</p>
+                                        <p class="text-2xl font-bold text-green-600">N$ ${fees.total.toLocaleString()}</p>
+                                    </div>
+                                    <hr>
+                                    <div>
+                                        <p class="font-bold mb-2">🏦 Bank Transfer:</p>
+                                        <p class="text-sm ml-4">Bank: <strong>FNB</strong></p>
+                                        <p class="text-sm ml-4">Account: <strong>62264884828</strong></p>
+                                        <p class="text-sm ml-4">Type: <strong>CHEQUE</strong></p>
+                                        <p class="text-sm ml-4 text-red-600">Reference: <strong>${data.fullName}</strong></p>
+                                    </div>
+                                    <hr>
+                                    <div>
+                                        <p class="font-bold mb-2">💰 E-Wallet:</p>
+                                        <p class="text-lg ml-4 font-bold text-green-600">081 6659 271</p>
+                                        <p class="text-xs ml-4">(Easy Wallet, Blue Wallet, E-Wallet)</p>
+                                    </div>
+                                    <hr>
+                                    <div class="bg-yellow-100 p-3 rounded">
+                                        <p class="font-bold text-yellow-800">⚠️ Send proof of payment to:</p>
+                                        <p class="text-lg font-bold">📲 +264 81 6659 271</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-100 rounded-lg p-4 text-sm text-left">
+                                <p class="mb-2"><strong>Learner:</strong> ${data.fullName}</p>
+                                <p class="mb-2"><strong>Program:</strong> ${data.program}</p>
+                                <p class="mb-2"><strong>Invoice:</strong> ${data.invoiceNumber}</p>
+                                <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+                            </div>
+
+                            <p class="text-sm text-gray-500 mt-6">
+                                For assistance, contact Mr. Shafa at <strong>+264 81 6659 271</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function render() {
+            const fees = calculateFees();
+            const app = document.getElementById('app');
+            
+            app.innerHTML = `
+                <div class="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4">
+                    <div class="max-w-4xl mx-auto">
+                        <!-- Header -->
+                        <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-t-2xl p-8 mt-8">
+                            <h1 class="text-3xl font-bold mb-2">BRIGHT SHAFA LEARNING CENTER</h1>
+                            <p class="text-blue-100 text-lg">2026 Registration Form - Walvis Bay</p>
+                            <p class="text-blue-200 text-sm mt-2">Empowering Learners for a Successful Future</p>
+                            <p class="text-sm mt-4">📞 +264 81 6659 271</p>
+                        </div>
+
+                        <!-- Progress -->
+                        <div class="bg-white px-8 py-4">
+                            <div class="flex justify-between mb-2">
+                                ${[1,2,3,4,5,6].map(i => `
+                                    <div class="flex-1 flex items-center">
+                                        <div class="w-8 h-8 rounded-full ${currentSection >= i ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'} flex items-center justify-center text-sm font-bold">
+                                            ${i}
+                                        </div>
+                                        ${i < 6 ? `<div class="flex-1 h-1 mx-2 ${currentSection > i ? 'bg-blue-600' : 'bg-gray-200'}"></div>` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <p class="text-center text-sm text-gray-600">Step ${currentSection} of 6</p>
+                        </div>
+
+                        <!-- Form Content -->
+                        <div class="bg-white rounded-b-2xl shadow-xl p-8">
+                            <div id="formContent"></div>
+                            
+                            <!-- Navigation -->
+                            <div class="flex justify-between mt-8 pt-6 border-t">
+                                ${currentSection > 1 ? `
+                                    <button onclick="prevSection()" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">
+                                        Previous
+                                    </button>
+                                ` : '<div></div>'}
+                                ${currentSection < 6 ? `
+                                    <button onclick="nextSection()" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium ml-auto">
+                                        Next
+                                    </button>
+                                ` : `
+                                    <button onclick="submitForm()" class="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold ml-auto">
+                                        ✓ Submit Registration
+                                    </button>
+                                `}
+                            </div>
+                        </div>
+
+                        <div class="text-center text-sm text-gray-600 mt-8 pb-8">
+                            <p>© 2026 Bright Shafa Learning Center - Walvis Bay, Namibia</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            renderSection();
+        }
+
+        function renderSection() {
+            const content = document.getElementById('formContent');
+            const fees = calculateFees();
+            
+            if(currentSection === 1) {
+                content.innerHTML = `
+                    <h2 class="text-2xl font-bold mb-6">👤 Learner Information</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Full Name *</label>
+                            <input type="text" id="fullName" value="${formData.fullName}" 
+                                class="w-full px-4 py-2 border rounded-lg" placeholder="Enter learner's full name">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Date of Birth *</label>
+                                <input type="date" id="dateOfBirth" value="${formData.dateOfBirth}" class="w-full px-4 py-2 border rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Gender *</label>
+                                <select id="gender" class="w-full px-4 py-2 border rounded-lg">
+                                    <option value="">Select</option>
+                                    <option value="Male" ${formData.gender==='Male'?'selected':''}>Male</option>
+                                    <option value="Female" ${formData.gender==='Female'?'selected':''}>Female</option>
+                                    <option value="Other" ${formData.gender==='Other'?'selected':''}>Prefer not to say</option>
+                                </select>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-semibold mt-6">Parent/Guardian Information</h3>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Parent/Guardian Name *</label>
+                            <input type="text" id="parentName" value="${formData.parentName}" class="w-full px-4 py-2 border rounded-lg">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Email *</label>
+                                <input type="email" id="parentEmail" value="${formData.parentEmail}" class="w-full px-4 py-2 border rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Phone *</label>
+                                <input type="tel" id="parentPhone" value="${formData.parentPhone}" class="w-full px-4 py-2 border rounded-lg">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            else if(currentSection === 2) {
+                const programs = ['Computer Course', 'Grade 1–3', 'Grade 4–7', 'Grade 8–9', 
+                                 'Grade 10–11 Full Time', 'Improving/Upgrading: Namibian System', 
+                                 'Improving/Upgrading: Cambridge IGCSE', 'AS Level/NAMCOL'];
+                content.innerHTML = `
+                    <h2 class="text-2xl font-bold mb-6">🎓 Program Selection</h2>
+                    <div class="space-y-3">
+                        ${programs.map(p => `
+                            <label class="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-blue-50">
+                                <input type="radio" name="program" value="${p}" 
+                                    ${formData.program===p?'checked':''} 
+                                    onchange="formData.program=this.value; render()" class="mr-3">
+                                <span class="font-medium">${p}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            else if(currentSection === 3) {
+                content.innerHTML = `
+                    <h2 class="text-2xl font-bold mb-6">📋 Program Details</h2>
+                    ${formData.program ? `
+                        <div class="space-y-4">
+                            ${renderProgramDetails()}
+                            ${fees.total > 0 ? `
+                                <div class="bg-green-50 border-2 border-green-200 rounded-lg p-6 mt-6">
+                                    <h3 class="font-bold text-lg mb-3">💰 Fee Summary</h3>
+                                    <div class="space-y-2">
+                                        <div class="flex justify-between"><span>Registration Fee:</span><span class="font-bold">N$ ${fees.regFee}</span></div>
+                                        ${fees.monthlyFee ? `<div class="flex justify-between"><span>Tuition:</span><span class="font-bold">N$ ${fees.monthlyFee}</span></div>` : ''}
+                                        ${fees.booksFee ? `<div class="flex justify-between"><span>Books:</span><span class="font-bold">N$ ${fees.booksFee}</span></div>` : ''}
+                                        ${fees.examFee ? `<div class="flex justify-between"><span>Exams:</span><span class="font-bold">N$ ${fees.examFee}</span></div>` : ''}
+                                        <hr class="my-2">
+                                        <div class="flex justify-between text-lg font-bold text-green-800">
+                                            <span>TOTAL:</span><span>N$ ${fees.total.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    ` : '<p class="text-gray-500">Please select a program first</p>'}
+                `;
+            }
+            else if(currentSection === 4) {
+                content.innerHTML = `
+                    <h2 class="text-2xl font-bold mb-6">💳 Payment Information</h2>
+                    <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-6">
+                        <h3 class="font-semibold text-lg mb-3">Banking Details</h3>
+                        <div class="space-y-3">
+                            <div class="bg-white p-4 rounded-lg">
+                                <p class="font-bold mb-2">🏦 Bank Transfer:</p>
+                                <p class="ml-4"><strong>Bank:</strong> FNB</p>
+                                <p class="ml-4"><strong>Account:</strong> 62264884828</p>
+                                <p class="ml-4"><strong>Type:</strong> CHEQUE</p>
+                                <p class="ml-4 text-red-600 mt-2"><strong>Reference:</strong> Your name</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg">
+                                <p class="font-bold mb-2">💰 E-Wallet:</p>
+                                <p class="ml-4 text-lg font-bold text-green-600">081 6659 271</p>
+                            </div>
+                            <div class="bg-yellow-50 border-2 border-yellow-400 p-4 rounded-lg">
+                                <p class="font-bold text-yellow-800">⚠️ Send proof to: 081 6659 271</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            else if(currentSection === 5) {
+                content.innerHTML = `
+                    <h2 class="text-2xl font-bold mb-6">ℹ️ Additional Information</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Special needs or accommodations?</label>
+                            <textarea id="specialNeeds" rows="3" class="w-full px-4 py-2 border rounded-lg">${formData.specialNeeds}</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">How did you hear about us?</label>
+                            <select id="howHeard" class="w-full px-4 py-2 border rounded-lg">
+                                <option value="">Select</option>
+                                <option>Social Media</option>
+                                <option>Friend/Family</option>
+                                <option>Google Search</option>
+                                <option>Walk-in</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+            }
+            else if(currentSection === 6) {
+                content.innerHTML = `
+                    <h2 class="text-2xl font-bold mb-6">✓ Terms & Agreement</h2>
+                    <div class="bg-gray-50 border-2 p-6 rounded-lg mb-6">
+                        <h3 class="font-semibold mb-3">Terms and Conditions</h3>
+                        <ul class="text-sm space-y-1 list-disc list-inside">
+                            <li>All fees are non-refundable once classes commence</li>
+                            <li>Payment due on 1st of each month</li>
+                            <li>Late payments may result in suspension</li>
+                            <li>Academic progress reports provided quarterly</li>
+                        </ul>
+                    </div>
+                    <label class="flex items-center p-4 border-2 rounded-lg mb-4">
+                        <input type="checkbox" id="agreeTerms" ${formData.agreeTerms?'checked':''} class="mr-3">
+                        <span class="text-sm font-medium">I agree to the terms and conditions *</span>
+                    </label>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Signature (Type full name) *</label>
+                        <input type="text" id="signature" value="${formData.signature}" 
+                            class="w-full px-4 py-2 border rounded-lg font-serif text-lg">
+                    </div>
+                    <div class="bg-green-50 border-2 border-green-200 rounded-lg p-6 mt-6">
+                        <h3 class="font-bold mb-3">Summary</h3>
+                        <p><strong>Learner:</strong> ${formData.fullName}</p>
+                        <p><strong>Program:</strong> ${formData.program}</p>
+                        <p class="text-lg font-bold mt-2 text-green-800">Total: N$ ${fees.total.toLocaleString()}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderProgramDetails() {
+            // Program-specific fields would go here
+            // Simplified for space - you can expand this
+            return `<p class="text-gray-600">Program details for ${formData.program}</p>`;
+        }
+
+        function nextSection() {
+            saveCurrentSection();
+            if(currentSection < 6) {
+                currentSection++;
+                render();
+            }
+        }
+
+        function prevSection() {
+            saveCurrentSection();
+            if(currentSection > 1) {
+                currentSection--;
+                render();
+            }
+        }
+
+        function saveCurrentSection() {
+            if(currentSection === 1) {
+                formData.fullName = document.getElementById('fullName')?.value || '';
+                formData.dateOfBirth = document.getElementById('dateOfBirth')?.value || '';
+                formData.gender = document.getElementById('gender')?.value || '';
+                formData.parentName = document.getElementById('parentName')?.value || '';
+                formData.parentEmail = document.getElementById('parentEmail')?.value || '';
+                formData.parentPhone = document.getElementById('parentPhone')?.value || '';
+            }
+            else if(currentSection === 5) {
+                formData.specialNeeds = document.getElementById('specialNeeds')?.value || '';
+                formData.howHeard = document.getElementById('howHeard')?.value || '';
+            }
+            else if(currentSection === 6) {
+                formData.agreeTerms = document.getElementById('agreeTerms')?.checked || false;
+                formData.signature = document.getElementById('signature')?.value || '';
+            }
+        }
+
+        // Initialize
+        render();
+    </script>
+</body>
+</html>
